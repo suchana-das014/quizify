@@ -1,6 +1,5 @@
 package com.example.quzifyapp;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -11,10 +10,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class PlayActivity extends AppCompatActivity {
 
-    private TextView cpt_question, text_question;
-    private Button btn_choose1, btn_choose2, btn_choose3, btn_choose4, btn_next;
+    TextView cpt_question, text_question;
+    Button btn_choose1, btn_choose2, btn_choose3, btn_choose4, btn_next;
 
-    private String[] questions = {
+    String[] questions = {
             "What is the capital of France?",
             "Which planet is known as the Red Planet?",
             "What is the largest ocean on Earth?",
@@ -27,7 +26,7 @@ public class PlayActivity extends AppCompatActivity {
             "What is the hardest natural substance?"
     };
 
-    private String[][] options = {
+    String[][] options = {
             {"Paris", "London", "Rome", "Berlin"},
             {"Venus", "Mars", "Jupiter", "Saturn"},
             {"Indian", "Pacific", "Atlantic", "Arctic"},
@@ -40,11 +39,23 @@ public class PlayActivity extends AppCompatActivity {
             {"Gold", "Diamond", "Iron", "Steel"}
     };
 
-    // Correct answers index for each question (0-based)
-    private int[] correctAnswers = {0, 1, 1, 0, 2, 3, 0, 2, 2, 1};
+    String[] correctAnswers = {
+            "Paris",
+            "Mars",
+            "Pacific",
+            "Shakespeare",
+            "2",
+            "Carbon Dioxide",
+            "Brazil",
+            "Water",
+            "Lion",
+            "Diamond"
+    };
 
-    private int currentQuestion = 0;
-    private int selectedOption = -1;
+    int currentQuestion = 0;
+    int totalQuestions = questions.length;
+    int score = 0; // score tracker
+    boolean answered = false; // to prevent multiple clicks
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,57 +72,40 @@ public class PlayActivity extends AppCompatActivity {
 
         loadQuestion();
 
-        View.OnClickListener optionListener = v -> {
-            resetOptionColors();
-            selectedOption = -1;
-
-            Button clicked = (Button) v;
-            clicked.setBackgroundColor(Color.parseColor("#FFC107")); // yellow highlight
-
-            int id = clicked.getId();
-            if (id == R.id.btn_choose1) {
-                selectedOption = 0;
-            } else if (id == R.id.btn_choose2) {
-                selectedOption = 1;
-            } else if (id == R.id.btn_choose3) {
-                selectedOption = 2;
-            } else if (id == R.id.btn_choose4) {
-                selectedOption = 3;
+        View.OnClickListener optionClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!answered) { // ensure only one answer per question
+                    Button clickedButton = (Button) v;
+                    checkAnswer(clickedButton);
+                    answered = true;
+                }
             }
         };
 
-        btn_choose1.setOnClickListener(optionListener);
-        btn_choose2.setOnClickListener(optionListener);
-        btn_choose3.setOnClickListener(optionListener);
-        btn_choose4.setOnClickListener(optionListener);
+        btn_choose1.setOnClickListener(optionClickListener);
+        btn_choose2.setOnClickListener(optionClickListener);
+        btn_choose3.setOnClickListener(optionClickListener);
+        btn_choose4.setOnClickListener(optionClickListener);
 
-        btn_next.setOnClickListener(v -> {
-            if (selectedOption == -1) {
-                Toast.makeText(this, "Please select an option", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (selectedOption == correctAnswers[currentQuestion]) {
-                Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Wrong!", Toast.LENGTH_SHORT).show();
-            }
-
-            currentQuestion++;
-
-            if (currentQuestion < questions.length) {
-                loadQuestion();
-                resetOptionColors();
-                selectedOption = -1;
-            } else {
-                Toast.makeText(this, "Quiz Finished!", Toast.LENGTH_LONG).show();
-                finish();
+        btn_next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currentQuestion++;
+                if (currentQuestion < totalQuestions) {
+                    resetButtonColors();
+                    loadQuestion();
+                    answered = false;
+                } else {
+                    Toast.makeText(PlayActivity.this, "Quiz Finished! Score: " + score + "/" + totalQuestions, Toast.LENGTH_LONG).show();
+                    finish();
+                }
             }
         });
     }
 
     private void loadQuestion() {
-        cpt_question.setText((currentQuestion + 1) + "/" + questions.length);
+        cpt_question.setText((currentQuestion + 1) + "/" + totalQuestions);
         text_question.setText(questions[currentQuestion]);
 
         btn_choose1.setText(options[currentQuestion][0]);
@@ -120,7 +114,21 @@ public class PlayActivity extends AppCompatActivity {
         btn_choose4.setText(options[currentQuestion][3]);
     }
 
-    private void resetOptionColors() {
+    private void checkAnswer(Button selectedButton) {
+        String selectedText = selectedButton.getText().toString();
+        String correctText = correctAnswers[currentQuestion];
+
+        if (selectedText.equals(correctText)) {
+            selectedButton.setBackgroundColor(getResources().getColor(R.color.correct_color));
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+            score++; // increment score
+        } else {
+            selectedButton.setBackgroundColor(getResources().getColor(R.color.wrong_color));
+            Toast.makeText(this, "Wrong!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void resetButtonColors() {
         int defaultColor = getResources().getColor(R.color.primary_color);
         btn_choose1.setBackgroundColor(defaultColor);
         btn_choose2.setBackgroundColor(defaultColor);
